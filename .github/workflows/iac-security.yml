@@ -1,23 +1,27 @@
 name: IaC Security Scan
 on: [push, pull_request]
 
-jobs:
-  terraform-security:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+terraform-security:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v3
 
-      - name: Install Trivy
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: config
-          scan-ref: ./iac-terraform-sec
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.6.6
 
-      - name: Terraform Validate
-        run: |
-          cd iac-terraform-sec
-          terraform init -backend=false
-          terraform validate || true
+    - name: Run Trivy IaC Scan
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: config
+        scan-ref: ./iac-terraform-sec
+
+    - name: Terraform Init & Validate
+      run: |
+        cd iac-terraform-sec
+        terraform init -backend=false
+        terraform validate
 
   ansible-security:
     runs-on: ubuntu-latest
