@@ -1,0 +1,30 @@
+---
+- name: Playbook dengan Misconfiguration
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install paket nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Copy konfigurasi nginx (insecure permission)
+      copy:
+        content: |
+          server {
+            listen 80;
+            server_name example.com;
+          }
+        dest: /etc/nginx/sites-available/default
+        mode: 0777  # Insecure: terlalu permisif + octal tanpa leading zero yang benar
+
+    - name: Buat user dengan plaintext password
+      user:
+        name: testuser
+        password: plainpassword123  # Insecure: plaintext password tanpa no_log
+
+    - name: Restart nginx jika config berubah (tanpa handler)
+      service:
+        name: nginx
+        state: restarted
+      when: ansible_facts.packages['nginx'] is changed  # Insecure: seharusnya pakai notify + handlers
