@@ -1,0 +1,27 @@
+- name: Install Apache and Deploy Configuration
+  hosts: all
+  become: true
+  tasks:
+    - name: Install Apache
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+      notify:
+        - Restart Apache
+
+    - name: Copy Secure Config
+      ansible.builtin.copy:
+        src: config.conf
+        dest: /etc/apache2/config.conf
+        mode: '0644'
+
+    - name: Create User With Hashed Password
+      ansible.builtin.user:
+        name: admin
+        password: "{{ 'admin123' | password_hash('sha512') }}"
+
+  handlers:
+    - name: Restart Apache
+      ansible.builtin.service:
+        name: apache2
+        state: restarted
